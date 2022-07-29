@@ -42,7 +42,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type Token: ReservableCurrency<Self::AccountId>;
+		type Currency: ReservableCurrency<Self::AccountId>;
 		type ProposalRound: Parameter + AtLeast32BitUnsigned;
 	}
 
@@ -102,20 +102,20 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		// Create a proposal that can be voted on
 		#[pallet::weight(1_000)]
-		pub fn create_proposal(origin: OriginFor<T>, proposal: Vec<u8>) -> DispatchResult {
+		pub fn create_proposal(origin: OriginFor<T>, proposal: u8) -> DispatchResult {
 			Ok(())
 		}
 
 		// Withdraw a proposal if still within the same voting period.
 		// This should probably cost more to stop people from wasting others' time.
 		#[pallet::weight(10_000)]
-		pub fn withdraw_proposal(origin: OriginFor<T>, proposal: Vec<u8>) -> DispatchResult {
+		pub fn withdraw_proposal(origin: OriginFor<T>, proposal: u8) -> DispatchResult {
 			Ok(())
 		}
 
 		// Cast a vote on an existing proposal.
 		#[pallet::weight(1_000)]
-		pub fn cast_vote(origin: OriginFor<T>, proposal: Vec<u8>, amount: u32) -> DispatchResult {
+		pub fn cast_vote(origin: OriginFor<T>, proposal: u8, amount: u32) -> DispatchResult {
 			Ok(())
 		}
 	}
