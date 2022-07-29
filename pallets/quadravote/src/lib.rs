@@ -43,7 +43,10 @@ pub mod pallet {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: ReservableCurrency<Self::AccountId>;
-		type ProposalRound: Parameter + AtLeast32BitUnsigned;
+
+		// How many blocks does each proposal round take?
+		#[pallet::constant]
+		type ProposalRound: Get<u32>;
 	}
 
 	#[pallet::pallet]
