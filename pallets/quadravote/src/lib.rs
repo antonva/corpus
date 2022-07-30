@@ -30,23 +30,26 @@ mod benchmarking;
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::{
-		dispatch::{DispatchResult, DispatchResultWithPostInfo},
-		pallet_prelude::*,
+		dispatch::DispatchResult, pallet_prelude::*, storage::StorageMap,
 		traits::ReservableCurrency,
 	};
 	use frame_system::pallet_prelude::*;
-	use sp_runtime::traits::AtLeast32BitUnsigned;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
+	/// TODO: We are tight coupling the identity pallet as it doesn't implement any reusable
+	/// trait that we can use for loose coupling. If time allows, copy the identity pallet and
+	/// implement loose coupling via a new trait/interface.
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + pallet_identity::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: ReservableCurrency<Self::AccountId>;
-
-		// How many blocks does each proposal round take?
+		// How many blocks does each proposal take?
 		#[pallet::constant]
-		type ProposalRound: Get<u32>;
+		type ProposalPeriodLength: Get<u32>;
+		// How many blocks does each voting period take.
+		#[pallet::constant]
+		type VotingPeriodLength: Get<u32>;
 	}
 
 	#[pallet::pallet]
@@ -76,8 +79,8 @@ pub mod pallet {
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
-		// We're not in the proposal period.
-		NotInProposalPeriod,
+		// Proposal is in the voting period.
+		ProposalIsBeingVotedOn,
 
 		// We're not in the voting period.
 		NotInVotingPeriod,
