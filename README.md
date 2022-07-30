@@ -1,22 +1,30 @@
-# Substrate Cumulus Parachain Template
+# Corpus
 
-A new [Cumulus](https://github.com/paritytech/cumulus/)-based Substrate node, ready for hacking ☁️..
+A quadratic voting parachain based on the 
+[Cumulus](https://github.com/paritytech/cumulus/)-based Substrate node.
 
-This project is originally a fork of the
-[Substrate Node Template](https://github.com/substrate-developer-hub/substrate-node-template)
-modified to include dependencies required for registering this node as a **parathread** or
-**parachain** to a **relay chain**.
+## Getting started
 
-The stand-alone version of this template is hosted on the
-[Substrate Devhub Parachain Template](https://github.com/substrate-developer-hub/substrate-parachain-template/)
-for each release of Polkadot. It is generated directly to the upstream
-[Parachain Template in Cumulus](https://github.com/paritytech/cumulus/tree/master/parachain-template)
-at each release branch using the
-[Substrate Template Generator](https://github.com/paritytech/substrate-template-generator/).
+### Build
+```rust
+cargo build --release
+```
 
-👉 Learn more about parachains [here](https://wiki.polkadot.network/docs/learn-parachains), and
-parathreads [here](https://wiki.polkadot.network/docs/learn-parathreads).
+### Generating chainspec
+```shell
+# From the root of the repository
+./scripts/generate-chain-spec.sh
+```
 
+This will generate 3 separate json files that can be used to start the collator
+and register a parachain. The files are located in `./node/service/chain-spec`
+and `./node/service/raw-chain-spec`.
 
-🧙 Learn about how to use this template and run your own parachain testnet for it in the
-[Devhub Cumulus Tutorial](https://docs.substrate.io/tutorials/v3/cumulus/start-relay/).
+### Generating wasm and genesis for parachains
+```shell
+# From the root of the repository
+./scripts/generate-genesis-wasm.sh
+```
+
+This will create 2 files, the wasm runtime at genesis and the state at genesis.
+Both files will be in `./node/service/genesis/`
