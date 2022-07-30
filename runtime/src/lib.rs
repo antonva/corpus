@@ -456,7 +456,8 @@ impl pallet_collator_selection::Config for Runtime {
 
 // Parameter types for the quadratic voting and identity pallets.
 parameter_types! {
-	pub const ProposalRound: u32 = 0;
+	pub const ProposalPeriodLength: u32 = 10;
+	pub const VotingPeriodLength: u32 = 10;
 	pub const MaxRegistrars: u32 = 32;
 	pub const MaxSubAccounts: u32 = 0;
 	pub const SubAccountDeposit: u32 = 0;
@@ -469,7 +470,8 @@ parameter_types! {
 impl pallet_quadravote::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type ProposalRound = ProposalRound;
+	type ProposalPeriodLength = ProposalPeriodLength;
+	type VotingPeriodLength = VotingPeriodLength;
 }
 
 impl pallet_identity::Config for Runtime {
@@ -487,6 +489,10 @@ impl pallet_identity::Config for Runtime {
 	type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
 }
 
+impl pallet_sudo::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+}
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -522,8 +528,12 @@ construct_runtime!(
 
 		// Identity.
 		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 50,
+
 		// Quadratic Voting.
 		Quadravote: pallet_quadravote::{Pallet, Call, Storage, Event<T>} = 51,
+
+		// Sudo
+		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 99,
 	}
 );
 
