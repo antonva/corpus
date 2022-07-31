@@ -454,26 +454,29 @@ impl pallet_collator_selection::Config for Runtime {
 	type WeightInfo = ();
 }
 
-// Parameter types for the quadratic voting and identity pallets.
+// pallet_quadravote parameters.
 parameter_types! {
-	pub const ProposalPeriodLength: u32 = 10;
-	pub const VotingPeriodLength: u32 = 10;
-	pub const MaxProposals: u32 = 10;
+	pub const PeriodLength: u32 = 4;
+	pub const MaxProposals: u32 = 1;
+	pub const MaxVotesPerAccount: u32 = 10;
+}
+
+impl pallet_quadravote::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type PeriodLength = PeriodLength;
+	type MaxProposals = MaxProposals;
+	type MaxVotesPerAccount = MaxVotesPerAccount;
+}
+
+// pallet_identity parameters
+parameter_types! {
 	pub const MaxRegistrars: u32 = 32;
 	pub const MaxSubAccounts: u32 = 0;
 	pub const SubAccountDeposit: u32 = 0;
 	pub const MaxAdditionalFields: u32 = 2;
 	pub const FieldDeposit: u32 = 0;
 	pub const BasicDeposit: u32 = 0;
-}
-
-/// Configure the quadravote pallet.
-impl pallet_quadravote::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type ProposalPeriodLength = ProposalPeriodLength;
-	type VotingPeriodLength = VotingPeriodLength;
-	type MaxProposals = MaxProposals;
 }
 
 impl pallet_identity::Config for Runtime {
