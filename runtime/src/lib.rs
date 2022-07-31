@@ -458,6 +458,7 @@ impl pallet_collator_selection::Config for Runtime {
 parameter_types! {
 	pub const ProposalPeriodLength: u32 = 10;
 	pub const VotingPeriodLength: u32 = 10;
+	pub const MaxProposals: u32 = 10;
 	pub const MaxRegistrars: u32 = 32;
 	pub const MaxSubAccounts: u32 = 0;
 	pub const SubAccountDeposit: u32 = 0;
@@ -472,6 +473,7 @@ impl pallet_quadravote::Config for Runtime {
 	type Currency = Balances;
 	type ProposalPeriodLength = ProposalPeriodLength;
 	type VotingPeriodLength = VotingPeriodLength;
+	type MaxProposals = MaxProposals;
 }
 
 impl pallet_identity::Config for Runtime {
