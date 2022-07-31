@@ -26,17 +26,17 @@ frame_support::construct_runtime!(
 );
 
 parameter_types! {
-	pub const ProposalPeriodLength: u32 = 10;
-	pub const VotingPeriodLength: u32 = 10;
+	pub const PeriodLength: u32 = 5;
 	pub const MaxProposals: u8 = 10;
+	pub const MaxVotesPerAccount: u32 = 10;
 }
 
 impl pallet_quadravote::Config for Test {
 	type Currency = ();
 	type Event = Event;
 	type MaxProposals = MaxProposals;
-	type ProposalPeriodLength = ProposalPeriodLength;
-	type VotingPeriodLength = VotingPeriodLength;
+	type PeriodLength = PeriodLength;
+	type MaxVotesPerAccount = MaxVotesPerAccount;
 }
 
 parameter_types! {
