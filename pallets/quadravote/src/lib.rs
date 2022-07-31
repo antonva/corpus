@@ -39,7 +39,8 @@ mod benchmarking;
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::{
-		dispatch::DispatchResult, fail, pallet_prelude::*, traits::ReservableCurrency, BoundedVec,
+		dispatch::DispatchResult, fail, inherent::Vec, pallet_prelude::*,
+		traits::ReservableCurrency, BoundedVec,
 	};
 	use frame_system::{
 		ensure_signed,
@@ -51,7 +52,7 @@ pub mod pallet {
 	/// trait that we can use for loose coupling. If time allows, copy the identity pallet and
 	/// implement loose coupling via a new trait/interface.
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_identity::Config {
+	pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: ReservableCurrency<Self::AccountId>;
@@ -80,6 +81,14 @@ pub mod pallet {
 	/// of proposals has been reached.
 	#[pallet::storage]
 	pub type ProposalPeriod<T> = StorageValue<_, ()>;
+
+	/// There's a possibility that clearing the proposals will not work.
+	/// In which case a pointer to the continuation will be stored here.
+	/// The use of unbounded here should be okay here as `MaxProposals`
+	/// bounds the size of the proposal storage.
+	#[pallet::storage]
+	#[pallet::unbounded]
+	pub type LeftoverProposalCursor<T: Config> = StorageValue<_, Vec<u8>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn get_all_proposals)]
@@ -152,9 +161,22 @@ pub mod pallet {
 						// The voting period has ended, the next block and forward will not
 						// validate any votes cast.
 						ProposalPeriod::<T>::put(());
-						Self::deposit_event(Event::VotingPeriodEnded(now))
+						Self::deposit_event(Event::VotingPeriodEnded(now));
 						// TODO: Calculate winning proposals
+						// TODO: Store the winning proposals
 						// TODO: Remove proposals and votes from storage
+						// The only time this is called from here is the beginning of the voting
+						// period. Therefore we can safely assume that None can always be passed
+						// as long as `MaxProposals` is > 1
+						let result = CountedProposals::<T>::clear(T::MaxProposals::get(), None);
+						LeftoverProposalCursor::<T>::set(result.maybe_cursor);
+					} else {
+						let removal_result = LeftoverProposalCursor::<T>::get();
+						if let Some(cursor) = removal_result {
+							let result =
+								CountedProposals::<T>::clear(T::MaxProposals::get(), Some(&cursor));
+							LeftoverProposalCursor::<T>::set(result.maybe_cursor);
+						}
 					}
 				},
 			}
@@ -216,14 +238,15 @@ pub mod pallet {
 			Ok(())
 		}
 
-		// Cast a vote on an existing proposal.
-		// Currency reserved to cast votes will not be released until the end of the voting period.
+		/// Cast a vote on an existing proposal.
+		/// Currency reserved to cast votes will not be released until the end of the voting period.
 		#[pallet::weight(1_000)]
 		pub fn cast_vote(origin: OriginFor<T>, proposal: [u8; 32], amount: i32) -> DispatchResult {
 			// Is the transaction signed
 			ensure_signed(origin);
-			// Are we in the voting period?
+			// Is the voting period active
 			ensure!(!ProposalPeriod::<T>::exists(), Error::<T>::NotInVotingPeriod);
+			// Is the voter identified
 			// We take the hit of writing twice per vote cast in order to have fast voting results.
 			// The reserved currency can then be released in batches.
 			Ok(())
