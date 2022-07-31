@@ -1,6 +1,7 @@
-use crate as pallet_template;
+use crate as pallet_quadravote;
 use frame_support::{parameter_types, traits::Everything};
 use frame_system as system;
+use pallet_identity;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -10,6 +11,7 @@ use sp_runtime::{
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
+pub(crate) type AccountId = u64;
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
 	pub enum Test where
@@ -18,9 +20,48 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		TemplateModule: pallet_template::{Pallet, Call, Storage, Event<T>},
+		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>},
+		Quadravote: pallet_quadravote::{Pallet, Call, Storage, Event<T>},
 	}
 );
+
+parameter_types! {
+	pub const ProposalPeriodLength: u32 = 10;
+	pub const VotingPeriodLength: u32 = 10;
+	pub const MaxProposals: u8 = 10;
+}
+
+impl pallet_quadravote::Config for Test {
+	type Currency = ();
+	type Event = Event;
+	type MaxProposals = MaxProposals;
+	type ProposalPeriodLength = ProposalPeriodLength;
+	type VotingPeriodLength = VotingPeriodLength;
+}
+
+parameter_types! {
+	pub const MaxRegistrars: u32 = 32;
+	pub const MaxSubAccounts: u32 = 0;
+	pub const SubAccountDeposit: u32 = 0;
+	pub const MaxAdditionalFields: u32 = 2;
+	pub const FieldDeposit: u32 = 0;
+	pub const BasicDeposit: u32 = 0;
+}
+
+impl pallet_identity::Config for Test {
+	type Event = Event;
+	type Currency = ();
+	type BasicDeposit = BasicDeposit;
+	type FieldDeposit = FieldDeposit;
+	type SubAccountDeposit = SubAccountDeposit;
+	type MaxSubAccounts = MaxSubAccounts;
+	type MaxAdditionalFields = MaxAdditionalFields;
+	type MaxRegistrars = MaxRegistrars;
+	type Slashed = (); // Don't do anything if account holders are slashed
+	type ForceOrigin = system::EnsureRoot<AccountId>;
+	type RegistrarOrigin = system::EnsureRoot<AccountId>;
+	type WeightInfo = pallet_identity::weights::SubstrateWeight<Test>;
+}
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
@@ -52,10 +93,6 @@ impl system::Config for Test {
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
-}
-
-impl pallet_template::Config for Test {
-	type Event = Event;
 }
 
 // Build genesis storage according to the mock runtime.
