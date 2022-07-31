@@ -469,29 +469,9 @@ impl pallet_quadravote::Config for Runtime {
 	type MaxVotesPerAccount = MaxVotesPerAccount;
 }
 
-// pallet_identity parameters
-parameter_types! {
-	pub const MaxRegistrars: u32 = 32;
-	pub const MaxSubAccounts: u32 = 0;
-	pub const SubAccountDeposit: u32 = 0;
-	pub const MaxAdditionalFields: u32 = 2;
-	pub const FieldDeposit: u32 = 0;
-	pub const BasicDeposit: u32 = 0;
-}
-
-impl pallet_identity::Config for Runtime {
+impl pallet_votingregistry::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type BasicDeposit = BasicDeposit;
-	type FieldDeposit = FieldDeposit;
-	type SubAccountDeposit = SubAccountDeposit;
-	type MaxSubAccounts = MaxSubAccounts;
-	type MaxAdditionalFields = MaxAdditionalFields;
-	type MaxRegistrars = MaxRegistrars;
-	type Slashed = (); // Don't do anything if account holders are slashed
-	type ForceOrigin = EnsureRoot<AccountId>;
-	type RegistrarOrigin = EnsureRoot<AccountId>;
-	type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
 }
 
 impl pallet_sudo::Config for Runtime {
@@ -531,12 +511,10 @@ construct_runtime!(
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 32,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
 
-		// Identity.
-		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 50,
-
+		// Voting Registry.
+		VotingRegistry: pallet_votingregistry::{Pallet, Call, Storage, Event<T>} = 50,
 		// Quadratic Voting.
 		Quadravote: pallet_quadravote::{Pallet, Call, Storage, Event<T>} = 51,
-
 		// Sudo
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 99,
 	}
