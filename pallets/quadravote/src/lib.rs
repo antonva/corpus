@@ -12,10 +12,19 @@
 ///
 /// Definitions:
 ///
+/// A period: either voting or proposing takes place within a period. The period for voting
+/// is exactly as long as the period for proposing. This is due to the fact that the current
+/// naive selection of pallets is the modulus of the length of a period.
+///
 /// An identified account holder is an account holder that has registered an identity
 /// via the `pallet-identity` pallet Identity module.
 ///
 /// A vote is the square root of the amount of tokens reserved.
+///
+/// Storage:
+/// A ProposalPeriod 'boolean' is stored to denote if we are in the voting period or the proposal period.
+/// Every proposal is stored in CountedProposals, a CountedStorageMap that is limited in size
+/// per round (defined in Config::MaxProposals).
 pub use pallet::*;
 
 #[cfg(test)]
@@ -30,9 +39,12 @@ mod benchmarking;
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::{
-		dispatch::DispatchResult, pallet_prelude::*, traits::ReservableCurrency, BoundedVec,
+		dispatch::DispatchResult, fail, pallet_prelude::*, traits::ReservableCurrency, BoundedVec,
 	};
-	use frame_system::{ensure_signed, pallet_prelude::*};
+	use frame_system::{
+		ensure_signed,
+		pallet_prelude::{BlockNumberFor, *},
+	};
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	/// TODO: We are tight coupling the identity pallet as it doesn't implement any reusable
@@ -43,28 +55,20 @@ pub mod pallet {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: ReservableCurrency<Self::AccountId>;
-		// How many blocks does each proposal take?
+		// How many blocks does each period take?
 		#[pallet::constant]
-		type ProposalPeriodLength: Get<u32>;
-		// How many blocks does each voting period take.
-		#[pallet::constant]
-		type VotingPeriodLength: Get<u32>;
+		type PeriodLength: Get<u32>;
 		// How many proposals can we have in a single round.
 		#[pallet::constant]
 		type MaxProposals: Get<u32>;
+		// How many votes can be cast for or against a proposal by a single account?
+		#[pallet::constant]
+		type MaxVotesPerAccount: Get<u32>;
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
-
-	// The pallet's runtime storage items.
-	// https://docs.substrate.io/v3/runtime/storage
-	#[pallet::storage]
-	#[pallet::getter(fn something)]
-	// Learn more about declaring storage items:
-	// https://docs.substrate.io/v3/runtime/storage#declaring-storage-items
-	pub type Something<T> = StorageValue<_, u32>;
 
 	/// Determines if we are in the proposal or voting period.
 	/// We are using the unit expression to achieve a slightly
@@ -77,27 +81,33 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type ProposalPeriod<T> = StorageValue<_, ()>;
 
-	/// This storage entry is useful for dispatching all of the proposals at
-	/// the same time.
 	#[pallet::storage]
 	#[pallet::getter(fn get_all_proposals)]
-	pub(super) type AllProposals<T: Config> =
-		StorageValue<_, BoundedVec<u8, T::MaxProposals>, ValueQuery>;
+	pub(super) type CountedProposals<T: Config> =
+		CountedStorageMap<_, Blake2_128Concat, [u8; 32], T::AccountId>;
 
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/v3/runtime/events-and-errors
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
+		// parameters: [proposal]
+		ProposalCreated([u8; 32]),
+		// parameters: [proposal]
+		ProposalWithdrawn([u8; 32]),
+		// parameters: [blockheight]
+		VotingPeriodEnded(BlockNumberFor<T>),
+		// parameters: [blockheight]
+		ProposalPeriodEnded(BlockNumberFor<T>),
 		// parameters: [proposal, who]
-		VoteRegistered(u8, T::AccountId),
+		VoteRegistered([u8; 32], T::AccountId),
 		// parameters: [proposals]
-		ProposalsDispatched(BoundedVec<u8, T::MaxProposals>),
+		ProposalsDispatched(BoundedVec<[u8; 32], T::MaxProposals>),
 		// parameters: [proposals, votes_for, votes_against]
 		VotingResultsDispatched(
-			BoundedVec<u8, T::MaxProposals>,
-			BoundedVec<u8, T::MaxProposals>,
-			BoundedVec<u8, T::MaxProposals>,
+			BoundedVec<[u8; 32], T::MaxProposals>,
+			BoundedVec<[u8; 32], T::MaxProposals>,
+			BoundedVec<[u8; 32], T::MaxProposals>,
 		),
 	}
 
@@ -114,20 +124,40 @@ pub mod pallet {
 		NotIdentified,
 		// Voter does not have enough funds for this vote.
 		NotEnoughFunds,
+		// Extrinsic sender is not the creator of the proposal.
+		NotYourProposal,
 		// Proposal already exists when trying to add a new one.
 		ProposalAlreadyExists,
 		// Proposal doesn't exist, when trying to withdraw an existing one.
 		ProposalDoesNotExist,
+		// Max proposal threshold reached for this period
+		TooManyProposals,
 	}
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
+		fn on_finalize(now: BlockNumberFor<T>) {
+			let period_length = T::PeriodLength::get();
 			match ProposalPeriod::<T>::exists() {
-				true => if now % <T as Config>::ProposalPeriodLength == 0 {},
-				false => if now % T::VotingPeriodLength == 0 { /* Transition to proposal period*/ },
+				true => {
+					if now % period_length.into() == 0u32.into() {
+						// The proposal period has ended, the next block and forward will not
+						// validate any new proposals or withdrawal requests.
+						ProposalPeriod::<T>::kill();
+						Self::deposit_event(Event::ProposalPeriodEnded(now))
+					}
+				},
+				false => {
+					if now % period_length.into() == 0u32.into() {
+						// The voting period has ended, the next block and forward will not
+						// validate any votes cast.
+						ProposalPeriod::<T>::put(());
+						Self::deposit_event(Event::VotingPeriodEnded(now))
+						// TODO: Calculate winning proposals
+						// TODO: Remove proposals and votes from storage
+					}
+				},
 			}
-			0
 		}
 	}
 
@@ -139,35 +169,63 @@ pub mod pallet {
 		/// Create a proposal that can be voted on.
 		/// TODO: The weight should be adjusted in order to control for spam.
 		#[pallet::weight(1_000)]
-		pub fn create_proposal(origin: OriginFor<T>, proposal: u8) -> DispatchResult {
+		pub fn create_proposal(origin: OriginFor<T>, proposal: [u8; 32]) -> DispatchResult {
 			// Is the transaction signed
-			ensure_signed(origin)?;
-			// Are we in the proposal period?
+			let creator = ensure_signed(origin)?;
+			// Is the creator identified
+			// TODO
+			// Is the runtime in a proposal period
 			ensure!(ProposalPeriod::<T>::exists(), Error::<T>::NotInProposalPeriod);
-			//ensure!(AllProposals::<T>::get(&proposal), Error::<T>::ProposalAlreadyExists);
-			// Cool, continue with a bog standard storage entry.
+			// Does the proposal exist already
+			ensure!(
+				!CountedProposals::<T>::contains_key(proposal),
+				Error::<T>::ProposalAlreadyExists
+			);
+			// Does the runtime allow for more proposals to be added
+			ensure!(
+				CountedProposals::<T>::count() < T::MaxProposals::get(),
+				Error::<T>::TooManyProposals
+			);
+			// Cool, continue with storage entry.
+			CountedProposals::<T>::insert(proposal, creator);
+			Self::deposit_event(Event::ProposalCreated(proposal));
 			Ok(())
 		}
 
 		/// Withdraw a proposal if still within the same voting period.
 		/// TODO: This should probably cost more to stop people from wasting others' time.
 		/// TODO: Adjust in relation with create_proposal weights.
+		/// TODO: Also read up on benchmarking.
 		#[pallet::weight(10_000)]
-		pub fn withdraw_proposal(origin: OriginFor<T>, proposal: u8) -> DispatchResult {
+		pub fn withdraw_proposal(origin: OriginFor<T>, proposal: [u8; 32]) -> DispatchResult {
 			// Is the transaction signed
-			ensure_signed(origin);
-			// Are we in the proposal period?
+			let sender = ensure_signed(origin)?;
+			// There is no need to check for identity in withdraw_proposal as the check has
+			// already been made in create_proposal.
+
+			// Is the runtime in a proposal period
 			ensure!(ProposalPeriod::<T>::exists(), Error::<T>::NotInProposalPeriod);
+			// Did this account create this proposal?
+			// Also, does it exist.
+			match CountedProposals::<T>::get(proposal) {
+				Some(creator) => ensure!(sender == creator, Error::<T>::NotYourProposal),
+				None => fail!(Error::<T>::ProposalDoesNotExist),
+			}
+			CountedProposals::<T>::remove(proposal);
+			Self::deposit_event(Event::ProposalWithdrawn(proposal));
 			Ok(())
 		}
 
 		// Cast a vote on an existing proposal.
+		// Currency reserved to cast votes will not be released until the end of the voting period.
 		#[pallet::weight(1_000)]
-		pub fn cast_vote(origin: OriginFor<T>, proposal: u8, amount: u32) -> DispatchResult {
+		pub fn cast_vote(origin: OriginFor<T>, proposal: [u8; 32], amount: i32) -> DispatchResult {
 			// Is the transaction signed
 			ensure_signed(origin);
-			// Are we in the proposal period?
+			// Are we in the voting period?
 			ensure!(!ProposalPeriod::<T>::exists(), Error::<T>::NotInVotingPeriod);
+			// We take the hit of writing twice per vote cast in order to have fast voting results.
+			// The reserved currency can then be released in batches.
 			Ok(())
 		}
 	}
