@@ -2,6 +2,7 @@
 
 set -e
 
+./scripts/clean-collator-db.sh
 ./target/release/parachain-template-node \
 	--alice \
 	--collator \

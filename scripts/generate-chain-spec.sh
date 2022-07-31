@@ -21,3 +21,5 @@ sed -i "s/\"relay_chain\": \"rococo-local\"/\"relay_chain\": \"rococo_local_test
 ./target/release/parachain-template-node build-spec \
 	--chain ./node/service/chain-specs/corpus.json \
 	--raw > ./node/service/raw-chain-specs/corpus-raw.json
+
+sed -i "s/\"bootNodes\": \[\n.*\\n]/\"bootNodes\": \[\]/g" ./node/service/raw-chain-specs/corpus-raw.json
