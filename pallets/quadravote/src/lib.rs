@@ -97,29 +97,26 @@ pub mod pallet {
 	pub(super) type CountedProposals<T: Config> =
 		CountedStorageMap<_, Blake2_128Concat, [u8; 32], T::AccountId>;
 
+	#[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
+	pub struct VotingProposal {
+		proposal: [u8; 32],
+		votes_for: u32,
+		votes_against: u32,
+	}
+
+	#[pallet::storage]
+	pub type Proposals<T: Config> = StorageValue<_, BoundedVec<VotingProposal, T::MaxProposals>>;
+
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/v3/runtime/events-and-errors
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		// parameters: [proposal]
-		ProposalCreated([u8; 32]),
-		// parameters: [proposal]
-		ProposalWithdrawn([u8; 32]),
-		// parameters: [blockheight]
-		VotingPeriodEnded(BlockNumberFor<T>),
-		// parameters: [blockheight]
-		ProposalPeriodEnded(BlockNumberFor<T>),
-		// parameters: [proposal, who]
-		VoteRegistered([u8; 32], T::AccountId),
-		// parameters: [proposals]
-		ProposalsDispatched(BoundedVec<[u8; 32], T::MaxProposals>),
-		// parameters: [proposals, votes_for, votes_against]
-		VotingResultsDispatched(
-			BoundedVec<[u8; 32], T::MaxProposals>,
-			BoundedVec<[u8; 32], T::MaxProposals>,
-			BoundedVec<[u8; 32], T::MaxProposals>,
-		),
+		ProposalCreated { proposal: [u8; 32] },
+		ProposalWithdrawn { proposal: [u8; 32] },
+		VotingPeriodEnded { block: BlockNumberFor<T> },
+		ProposalPeriodEnded { block: BlockNumberFor<T> },
+		VoteRegistered { proposal: [u8; 32], who: T::AccountId },
 	}
 
 	// Errors inform users that something went wrong.
@@ -155,7 +152,7 @@ pub mod pallet {
 						// The proposal period has ended, the next block and forward will not
 						// validate any new proposals or withdrawal requests.
 						ProposalPeriod::<T>::kill();
-						Self::deposit_event(Event::ProposalPeriodEnded(now))
+						Self::deposit_event(Event::ProposalPeriodEnded { block: now })
 					}
 				},
 				false => {
@@ -163,7 +160,7 @@ pub mod pallet {
 						// The voting period has ended, the next block and forward will not
 						// validate any votes cast.
 						ProposalPeriod::<T>::put(());
-						Self::deposit_event(Event::VotingPeriodEnded(now));
+						Self::deposit_event(Event::VotingPeriodEnded { block: now });
 						// TODO: Calculate winning proposals
 						// TODO: Store the winning proposals
 						// TODO: Remove proposals and votes from storage
@@ -212,7 +209,7 @@ pub mod pallet {
 			);
 			// Cool, continue with storage entry.
 			CountedProposals::<T>::insert(proposal, creator);
-			Self::deposit_event(Event::ProposalCreated(proposal));
+			Self::deposit_event(Event::ProposalCreated { proposal });
 			Ok(())
 		}
 
@@ -236,7 +233,7 @@ pub mod pallet {
 				None => fail!(Error::<T>::ProposalDoesNotExist),
 			}
 			CountedProposals::<T>::remove(proposal);
-			Self::deposit_event(Event::ProposalWithdrawn(proposal));
+			Self::deposit_event(Event::ProposalWithdrawn { proposal });
 			Ok(())
 		}
 
