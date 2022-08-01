@@ -27,6 +27,7 @@ serde = { version = "1.0.132" }
 sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
 sp-io = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.26" }
 
 [features]
 default = ["std"]
