@@ -144,12 +144,12 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_finalize(now: BlockNumberFor<T>) {
+		fn on_initialize(now: BlockNumberFor<T>) -> Weight {
 			let period_length = T::PeriodLength::get();
 			match ProposalPeriod::<T>::exists() {
 				true => {
 					if now % period_length.into() == 0u32.into() {
-						// The proposal period has ended, the next block and forward will not
+						// The proposal period has ended, this block and forward will not
 						// validate any new proposals or withdrawal requests.
 						ProposalPeriod::<T>::kill();
 						Self::deposit_event(Event::ProposalPeriodEnded { block: now })
@@ -157,7 +157,7 @@ pub mod pallet {
 				},
 				false => {
 					if now % period_length.into() == 0u32.into() {
-						// The voting period has ended, the next block and forward will not
+						// The voting period has ended, this block and forward will not
 						// validate any votes cast.
 						ProposalPeriod::<T>::put(());
 						Self::deposit_event(Event::VotingPeriodEnded { block: now });
@@ -179,6 +179,8 @@ pub mod pallet {
 					}
 				},
 			}
+			// TODO: Figure out weight
+			0
 		}
 	}
 
