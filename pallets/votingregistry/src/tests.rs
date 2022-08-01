@@ -1,6 +1,5 @@
 use crate::{mock::*, Error};
-use frame_support::error::BadOrigin;
-use frame_support::{assert_noop, assert_ok};
+use frame_support::{assert_noop, assert_ok, error::BadOrigin};
 
 #[test]
 fn test_balance_assumptions() {

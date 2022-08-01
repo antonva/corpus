@@ -4,9 +4,6 @@ use frame_support::{
 	traits::{ConstU64, Everything},
 };
 
-type AccountId = u64;
-type Balance = u64;
-
 use frame_system as system;
 use pallet_balances;
 use sp_core::H256;
@@ -18,6 +15,8 @@ use sp_runtime::{
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
+pub(crate) type AccountId = u64;
+type Balance = u64;
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
 	pub enum Test where
