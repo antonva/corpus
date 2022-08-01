@@ -39,8 +39,12 @@ mod benchmarking;
 #[frame_support::pallet]
 pub mod pallet {
 	use frame_support::{
-		dispatch::DispatchResult, fail, inherent::Vec, pallet_prelude::*,
-		traits::ReservableCurrency, BoundedVec,
+		dispatch::DispatchResult,
+		fail,
+		inherent::Vec,
+		pallet_prelude::*,
+		traits::{Contains, ReservableCurrency},
+		BoundedVec,
 	};
 	use frame_system::{
 		ensure_signed,
@@ -48,21 +52,19 @@ pub mod pallet {
 	};
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
-	/// TODO: We are tight coupling the identity pallet as it doesn't implement any reusable
-	/// trait that we can use for loose coupling. If time allows, copy the identity pallet and
-	/// implement loose coupling via a new trait/interface.
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: ReservableCurrency<Self::AccountId>;
-		// How many blocks does each period take?
+		type IdentityProvider: Contains<Self::AccountId>;
+		/// How many blocks does each period run for.
 		#[pallet::constant]
 		type PeriodLength: Get<u32>;
-		// How many proposals can we have in a single round.
+		/// How many proposals can run simultaneously.
 		#[pallet::constant]
 		type MaxProposals: Get<u32>;
-		// How many votes can be cast for or against a proposal by a single account?
+		/// How many votes can be cast for or against a proposal by a single account.
 		#[pallet::constant]
 		type MaxVotesPerAccount: Get<u32>;
 	}

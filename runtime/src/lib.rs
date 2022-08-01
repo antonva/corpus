@@ -464,6 +464,7 @@ parameter_types! {
 impl pallet_quadravote::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
+	type IdentityProvider = VotingRegistry;
 	type PeriodLength = PeriodLength;
 	type MaxProposals = MaxProposals;
 	type MaxVotesPerAccount = MaxVotesPerAccount;
