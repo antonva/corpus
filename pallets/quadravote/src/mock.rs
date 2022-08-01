@@ -1,5 +1,5 @@
 use crate as pallet_quadravote;
-use frame_support::{parameter_types, traits::Everything};
+use frame_support::{dispatch::Vec, parameter_types, traits::Everything};
 use frame_system as system;
 use pallet_identity;
 use sp_core::H256;
@@ -20,8 +20,9 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Identity: pallet_identity::{Pallet, Call, Storage, Event<T>},
 		Quadravote: pallet_quadravote::{Pallet, Call, Storage, Event<T>},
+		// TODO: mock this and remove the dependency
+		VotingRegistry: pallet_votingregistry::{Pallet, Call, Storage, Event<T>}
 	}
 );
 
@@ -34,6 +35,7 @@ parameter_types! {
 impl pallet_quadravote::Config for Test {
 	type Currency = ();
 	type Event = Event;
+	type IdentityProvider = VotingRegistry;
 	type MaxProposals = MaxProposals;
 	type PeriodLength = PeriodLength;
 	type MaxVotesPerAccount = MaxVotesPerAccount;

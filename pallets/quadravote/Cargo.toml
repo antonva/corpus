@@ -20,11 +20,13 @@ frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-
 frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
 frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
-# Sibling Pallets
-pallet-identity = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+# Sibling Pallets, TODO: Remove when mocks are fixed
+pallet-votingregistry = { path = "../votingregistry", default-features = false }
 
 [dev-dependencies]
 serde = { version = "1.0.132" }
+#Only needed for testing
+pallet-balances = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
 
 # Substrate
 sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
@@ -41,6 +43,6 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"sp-runtime/std",
-	"pallet-identity/std",
+	"pallet-votingregistry/std",
 ]
 try-runtime = [ "frame-support/try-runtime" ]
