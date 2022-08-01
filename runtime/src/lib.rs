@@ -27,7 +27,7 @@ use sp_version::RuntimeVersion;
 
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::Everything,
+	traits::{ConstU128, Everything},
 	weights::{
 		constants::WEIGHT_PER_SECOND, ConstantMultiplier, DispatchClass, Weight,
 		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
@@ -470,9 +470,12 @@ impl pallet_quadravote::Config for Runtime {
 	type MaxVotesPerAccount = MaxVotesPerAccount;
 }
 
+parameter_types! {}
+
 impl pallet_votingregistry::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
+	type ReserveAmount = ConstU128<50>;
 }
 
 impl pallet_sudo::Config for Runtime {
