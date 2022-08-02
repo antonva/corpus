@@ -482,6 +482,7 @@ impl pallet_sudo::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 }
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
 	pub enum Runtime where
@@ -516,11 +517,11 @@ construct_runtime!(
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
 
 		// Voting Registry.
-		VotingRegistry: pallet_votingregistry::{Pallet, Call, Storage, Event<T>} = 50,
+		VotingRegistry: pallet_votingregistry = 50,
 		// Quadratic Voting.
-		Quadravote: pallet_quadravote::{Pallet, Call, Storage, Event<T>} = 51,
+		Quadravote: pallet_quadravote = 51,
 		// Sudo
-		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 99,
+		Sudo: pallet_sudo = 99,
 	}
 );
 
