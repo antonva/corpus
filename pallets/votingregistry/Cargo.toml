@@ -19,6 +19,7 @@ scale-info = { version = "2.0.0", default-features = false, features = ["derive"
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-features = false, optional = true, branch = "polkadot-v0.9.26" }
 frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
 frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+corpus-traits = { path = "../../corpus-traits", default-features = false }
 
 [dev-dependencies]
 serde = { version = "1.0.132" }
@@ -38,5 +39,6 @@ std = [
 	"frame-benchmarking/std",
 	"frame-support/std",
 	"frame-system/std",
+	"corpus-traits/std",
 ]
 try-runtime = [ "frame-support/try-runtime" ]

@@ -16,8 +16,8 @@
 /// is exactly as long as the period for proposing. This is due to the fact that the current
 /// naive selection of pallets is the modulus of the length of a period.
 ///
-/// An identified account holder is an account holder that has registered an identity
-/// via the `pallet-identity` pallet Identity module.
+/// An identified account holder is an account holder that has registered to vote
+/// via the `pallet-votingregistry` pallet VotingRegistry module.
 ///
 /// A vote is the square root of the amount of tokens reserved.
 ///
@@ -38,13 +38,10 @@ mod benchmarking;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use corpus_traits::IdentityInterface;
 	use frame_support::{
-		dispatch::DispatchResult,
-		fail,
-		inherent::Vec,
-		pallet_prelude::*,
-		traits::{Contains, ReservableCurrency},
-		BoundedVec,
+		dispatch::DispatchResult, fail, inherent::Vec, pallet_prelude::*,
+		traits::ReservableCurrency, BoundedVec,
 	};
 	use frame_system::{
 		ensure_signed,
@@ -57,7 +54,7 @@ pub mod pallet {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type Currency: ReservableCurrency<Self::AccountId>;
-		type IdentityProvider: Contains<Self::AccountId>;
+		type IdentityProvider: IdentityInterface<Self::AccountId>;
 		/// How many blocks does each period run for.
 		#[pallet::constant]
 		type PeriodLength: Get<u32>;
@@ -196,6 +193,12 @@ pub mod pallet {
 			// Is the transaction signed
 			let creator = ensure_signed(origin)?;
 			// Is the creator identified
+			ensure!(
+				<<T as Config>::IdentityProvider as IdentityInterface<T::AccountId>>::is_identified(
+					&creator
+				),
+				Error::<T>::NotIdentified
+			);
 			// TODO
 			// Is the runtime in a proposal period
 			ensure!(ProposalPeriod::<T>::exists(), Error::<T>::NotInProposalPeriod);
@@ -223,13 +226,14 @@ pub mod pallet {
 		pub fn withdraw_proposal(origin: OriginFor<T>, proposal: [u8; 32]) -> DispatchResult {
 			// Is the transaction signed
 			let sender = ensure_signed(origin)?;
+
 			// There is no need to check for identity in withdraw_proposal as the check has
 			// already been made in create_proposal.
 
 			// Is the runtime in a proposal period
 			ensure!(ProposalPeriod::<T>::exists(), Error::<T>::NotInProposalPeriod);
-			// Did this account create this proposal?
-			// Also, does it exist.
+
+			// Did this account create this proposal? Does it exist?
 			match CountedProposals::<T>::get(proposal) {
 				Some(creator) => ensure!(sender == creator, Error::<T>::NotYourProposal),
 				None => fail!(Error::<T>::ProposalDoesNotExist),
@@ -244,7 +248,7 @@ pub mod pallet {
 		#[pallet::weight(1_000)]
 		pub fn cast_vote(origin: OriginFor<T>, proposal: [u8; 32], amount: i32) -> DispatchResult {
 			// Is the transaction signed
-			ensure_signed(origin);
+			ensure_signed(origin)?;
 			// Is the voting period active
 			ensure!(!ProposalPeriod::<T>::exists(), Error::<T>::NotInVotingPeriod);
 			// Is the voter identified

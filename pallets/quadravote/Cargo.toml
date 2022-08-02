@@ -20,6 +20,7 @@ frame-benchmarking = { git = "https://github.com/paritytech/substrate", default-
 frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
 frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.26" }
+corpus-traits = { path = "../../corpus-traits", default-features = false}
 
 [dev-dependencies]
 serde = { version = "1.0.132" }
@@ -42,5 +43,6 @@ std = [
 	"frame-system/std",
 	"sp-runtime/std",
 	"pallet-votingregistry/std",
+	"corpus-traits/std",
 ]
 try-runtime = [ "frame-support/try-runtime" ]

@@ -1,5 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use corpus_traits::IdentityInterface;
 pub use pallet::*;
 
 /// Custom type to simplify Config specification.
@@ -14,6 +15,7 @@ mod benchmarking;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use super::*;
 	use frame_support::traits::Currency;
 	use frame_support::{
 		dispatch::DispatchResult, fail, pallet_prelude::*, traits::ReservableCurrency,
@@ -44,7 +46,7 @@ pub mod pallet {
 	// require a default value so we go for valuequery and handling the default
 	// in code.
 	#[pallet::storage]
-	pub type VotingRegistry<T: Config> =
+	pub(super) type VotingRegistry<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, BalanceOf<T>, OptionQuery>;
 
 	// Pallets use events to inform users when important changes are made.
@@ -115,16 +117,10 @@ pub mod pallet {
 			Ok(())
 		}
 	}
+}
 
-	impl<T: Config> Pallet<T> {
-		fn contains(t: &T::AccountId) -> bool {
-			VotingRegistry::<T>::contains_key(t)
-		}
-	}
-
-	impl<T: Config> frame_support::traits::Contains<T::AccountId> for Pallet<T> {
-		fn contains(t: &T::AccountId) -> bool {
-			Self::contains(&t)
-		}
+impl<T: Config> IdentityInterface<T::AccountId> for Pallet<T> {
+	fn is_identified(who: &T::AccountId) -> bool {
+		VotingRegistry::<T>::contains_key(who)
 	}
 }
