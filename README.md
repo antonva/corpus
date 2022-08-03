@@ -1,7 +1,9 @@
 # Corpus
 
-A quadratic voting parachain based on the 
+A quadratic voting parachain based on the
 [Cumulus](https://github.com/paritytech/cumulus/)-based Substrate node.
+
+![Event log of a successful vote](./events.png)
 
 ## Getting started
 
@@ -25,13 +27,13 @@ runtime and chainspec is included in the repository.
 
 Also note that there is a problem with the generation of the chainspec
 where it will add a bootnode even if you don't want one. Should you get an
-error such as: 
+error such as:
 
 ```shell
 💔 The bootnode you want to connect provided a different peer ID than the one you expect:...
 ```
 
-Then it should be fine to just carry on, but you can remove the entry from 
+Then it should be fine to just carry on, but you can remove the entry from
 the raw chainspec to get rid of it.
 
 #### Generating chainspec
@@ -57,9 +59,9 @@ Both files will be in `./node/service/genesis/`
 Corpus implements two new pallets in addition to being run with Sudo at the moment.
 These are `pallet-quadravote` and `pallet-votingregistry`.
 
-### Pallet Voting Registry 
+### Pallet Voting Registry
 Serves the function of providing an identity for an account
-in order to vote. In this simple scheme there are no meatspace validations made 
+in order to vote. In this simple scheme there are no meatspace validations made
 by a registrar so any account is a valid voter if they so choose. There is a runtime
 adjustable amount of reserved currency reserved for being a registered voter.
 
@@ -83,6 +85,6 @@ Extrinsics:
 - withdraw_proposal: withdraws an existing proposal if originally created by the sender. Can only happen in proposal period.
 - cast_vote: Casts votes on proposals via an index. can submit votes_for or votes_against.
 
-Both `create_proposal` and `cast_vote` check for identity via the trait implemented by votingregistry. 
+Both `create_proposal` and `cast_vote` check for identity via the trait implemented by votingregistry.
 `withdraw_proposal` does not as an account may have deregistered it's identity but still have funds
 reserved in a proposal.
