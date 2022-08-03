@@ -5,6 +5,16 @@ A quadratic voting parachain based on the
 
 ![Event log of a successful vote](./events.png)
 
+
+## Relevant bits
+In decreasing order of importance(ish)
+
+- `./pallets/quadravote`
+- `./pallets/votingregistry`
+- `./runtime/`
+- `./corpus-traits/`
+- `./scripts/{start-collator-node, generate-genesis-wasm, generate-chain-spec}.sh`
+- `./node/service/*
 ## Getting started
 
 ### Build
@@ -13,9 +23,12 @@ cargo build --release
 ```
 ### Run
 The assumed `ParaId` is 2000 and has been tested runnig on a version of the
-rococo local testnet named cambrelay which can be found [here](https://github.com/antonva/cambrelay). There's nothing special about this testnet so this should work on any relay network, there is however a stored chainspec for the cambrelay
-network in this node.
+rococo local testnet named cambrelay which can be found 
+[here](https://github.com/antonva/cambrelay/tree/release-v0.9.26). 
+There's nothing special about this testnet so this should work on any relay network, there is however a stored chainspec for the cambrelay network in this node.
 
+The branch that I've been working on is the release-v0.9.26 for cambrelay
+but for corpus it's main.
 ```
 ./scripts/start-collator-node.sh
 ```
