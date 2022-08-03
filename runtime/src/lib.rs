@@ -27,7 +27,7 @@ use sp_version::RuntimeVersion;
 
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::Everything,
+	traits::{ConstU128, Everything},
 	weights::{
 		constants::WEIGHT_PER_SECOND, ConstantMultiplier, DispatchClass, Weight,
 		WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial,
@@ -54,8 +54,8 @@ use weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight};
 use xcm::latest::prelude::BodyId;
 use xcm_executor::XcmExecutor;
 
-/// Import the template pallet.
-pub use pallet_template;
+/// Import the quadravote pallet.
+pub use pallet_quadravote;
 
 /// Alias to 512-bit hash when used in the context of a transaction signature on the chain.
 pub type Signature = MultiSignature;
@@ -454,9 +454,35 @@ impl pallet_collator_selection::Config for Runtime {
 	type WeightInfo = ();
 }
 
-/// Configure the pallet template in pallets/template.
-impl pallet_template::Config for Runtime {
+// pallet_quadravote parameters.
+parameter_types! {
+	pub const PeriodLength: u32 = 4;
+	pub const MaxProposals: u32 = 1;
+	pub const MaxVotesPerAccount: u32 = 10;
+	pub const MaxVotersPerSession: u32 = 10;
+}
+
+impl pallet_quadravote::Config for Runtime {
 	type Event = Event;
+	type Currency = Balances;
+	type IdentityProvider = VotingRegistry;
+	type PeriodLength = PeriodLength;
+	type MaxProposals = MaxProposals;
+	type MaxVotesPerAccount = MaxVotesPerAccount;
+	type MaxVotersPerSession = MaxVotersPerSession;
+}
+
+parameter_types! {}
+
+impl pallet_votingregistry::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type ReserveAmount = ConstU128<50>;
+}
+
+impl pallet_sudo::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -478,6 +504,7 @@ construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 11,
 
+
 		// Collator support. The order of these 4 are important and shall not change.
 		Authorship: pallet_authorship::{Pallet, Call, Storage} = 20,
 		CollatorSelection: pallet_collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
@@ -491,8 +518,12 @@ construct_runtime!(
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 32,
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
 
-		// Template
-		TemplatePallet: pallet_template::{Pallet, Call, Storage, Event<T>}  = 40,
+		// Voting Registry.
+		VotingRegistry: pallet_votingregistry,
+		// Quadratic Voting.
+		Quadravote: pallet_quadravote = 51,
+		// Sudo
+		Sudo: pallet_sudo = 99,
 	}
 );
 
