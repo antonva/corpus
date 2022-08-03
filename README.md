@@ -113,3 +113,12 @@ We assume we start in the proposal period.
 6. evelyn votes against proposal `0` with `5` votes, reserving 25
 7. voting period ends
 8. alice and evelyn are refunded their reserve, proposal `0`'s hash is recorded in enacted proposals
+
+## Addendum - starting the parachain
+
+- In cambrelay I've added a `./scripts/start-relay-chain.sh` which starts 2 validator nodes.
+- Use polkadot.js to navigate to the relay chain, register a paraid
+- Use polkadot.js on the relay chain, go to sudo, use the `paraSudoWrapper` and `sudoScheduleParaInitialize` extrinsic to upload the wasm and genesis
+  located in `./node/service/genesis/` in the corpus repository
+- The parachain should be registered and on cooldown
+- If you haven't already, start the collator via `./scripts/start-collator-node.sh` in the corus repository
