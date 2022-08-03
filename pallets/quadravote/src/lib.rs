@@ -114,9 +114,6 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::unbounded]
 	pub type LeftoverProposalCursor<T: Config> = StorageValue<_, Vec<u8>>;
-	#[pallet::storage]
-	#[pallet::unbounded]
-	pub type LeftoverVoterCursor<T: Config> = StorageValue<_, Vec<u8>>;
 
 	#[pallet::storage]
 	pub(super) type CountedProposals<T: Config> =
@@ -212,6 +209,7 @@ pub mod pallet {
 				false => {
 					if now % period_length.into() == 0u32.into() {
 						// The voting period has ended, this block and forward will not
+						//println!("3we here");
 						// validate any votes cast.
 						ProposalPeriod::<T>::put(());
 						Self::deposit_event(Event::VotingPeriodEnded { block: now });
@@ -238,14 +236,23 @@ pub mod pallet {
 							None => (), //No proposals, no winners.
 						};
 
+						// This is why we bound the number of voters.
+
+						let voter_iter = Voters::<T>::iter_keys();
+						voter_iter.for_each(|v_key| {
+							// remove from storage
+							if let Some(voter) = Voters::<T>::take(&v_key) {
+								// refund the reserve
+								T::Currency::unreserve(&v_key, voter.amount_reserved);
+							}
+						});
+
 						Proposals::<T>::kill();
 						// The only time this is called from here is the beginning of the voting
 						// period. Therefore we can safely assume that None can always be passed
 						// as long as `MaxProposals` is > 1
-						let voter_result = Voters::<T>::clear(T::MaxVotersPerSession::get(), None);
 						let proposal_result =
 							CountedProposals::<T>::clear(T::MaxProposals::get(), None);
-						LeftoverVoterCursor::<T>::set(voter_result.maybe_cursor);
 						LeftoverProposalCursor::<T>::set(proposal_result.maybe_cursor);
 					} else {
 						// Continue to clean up the proposals and voters for as long as there
@@ -255,12 +262,6 @@ pub mod pallet {
 							let result =
 								CountedProposals::<T>::clear(T::MaxProposals::get(), Some(&cursor));
 							LeftoverProposalCursor::<T>::set(result.maybe_cursor);
-						}
-						let leftover_voters = LeftoverVoterCursor::<T>::get();
-						if let Some(cursor) = leftover_voters {
-							let result =
-								Voters::<T>::clear(T::MaxVotersPerSession::get(), Some(&cursor));
-							LeftoverVoterCursor::<T>::set(result.maybe_cursor);
 						}
 					}
 				},

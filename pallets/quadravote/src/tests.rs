@@ -184,5 +184,13 @@ fn call_cast_vote() {
 			Quadravote::cast_vote(Origin::signed(alice), 1, 5, 0),
 			Error::<Test>::AllVotesCastForAccount
 		);
+
+		// Proposal period
+		// Advance the chain by the period length
+		current_height += period_length;
+		run_to_block(current_height.into());
+
+		// Refunded the voter balance
+		assert_eq!(Balances::free_balance(&alice), 9_999_950);
 	});
 }
