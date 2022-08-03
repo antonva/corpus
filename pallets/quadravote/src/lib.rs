@@ -136,10 +136,19 @@ pub mod pallet {
 		votes_against: u32,
 	}
 
+	/// This is where the proposals that get voted in get stored
+	/// TODO: repeals process.
+	/// TODO: storing something more relevant than the unit might be interesting.
+	#[pallet::storage]
+	#[pallet::getter(fn get_all_enacted_proposals)]
+	pub type EnactedProposals<T: Config> = StorageMap<_, Blake2_128Concat, [u8; 32], ()>;
+
+	/// Handles the current voting period's voters.
 	#[pallet::storage]
 	#[pallet::getter(fn get_all_voters)]
 	pub type Voters<T: Config> = CountedStorageMap<_, Blake2_128Concat, T::AccountId, Voter<T>>;
 
+	/// A vector of the proposed proposals that can be quickly fetched and computed.
 	#[pallet::storage]
 	pub type Proposals<T: Config> = StorageValue<_, BoundedVec<VotingProposal, T::MaxProposals>>;
 
@@ -206,7 +215,7 @@ pub mod pallet {
 						// validate any votes cast.
 						ProposalPeriod::<T>::put(());
 						Self::deposit_event(Event::VotingPeriodEnded { block: now });
-						// TODO: Calculate winning proposals
+						// Calculate winning proposals
 						let maybe_proposals = Proposals::<T>::get();
 						match maybe_proposals {
 							Some(proposals) => {
@@ -216,13 +225,18 @@ pub mod pallet {
 											.into_inner()
 											.into_iter()
 											.filter(|p| p.votes_for > p.votes_against)
+											.map(|p| {
+												EnactedProposals::<T>::insert(p.proposal, ());
+												return p;
+											})
 											.collect(),
 									);
+								// Store the winning proposals
+
 								Self::deposit_event(Event::WinningProposals { winners })
 							},
 							None => (), //No proposals, no winners.
 						};
-						// TODO: Store the winning proposals
 
 						Proposals::<T>::kill();
 						// The only time this is called from here is the beginning of the voting
@@ -299,9 +313,10 @@ pub mod pallet {
 				votes_against: 0,
 			});
 
+			// TODO: catch and roll back here for extra defensive coding
 			match res {
 				Ok(_) => (),
-				_Error => (), // TODO: catch and roll back here for extra defensive coding
+				Error => (),
 			};
 
 			Self::deposit_event(Event::ProposalCreated { proposal });
