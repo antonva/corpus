@@ -2,4 +2,4 @@
 
 set -e
 
-rm -rf /tmp/parachain
+rm -rf /tmp/corpus-parachain

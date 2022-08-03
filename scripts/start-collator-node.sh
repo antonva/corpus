@@ -8,7 +8,7 @@ set -e
 	--collator \
 	--force-authoring \
 	--chain ./node/service/raw-chain-specs/corpus-raw.json \
-	--base-path /tmp/parachain/alice \
+	--base-path /tmp/corpus-parachain/alice \
 	--port 40333 \
 	--ws-port 8844 \
 	-- \
