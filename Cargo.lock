@@ -1000,6 +1000,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "corpus-traits"
+version = "0.1.0"
+
+[[package]]
 name = "cpp_demangle"
 version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5377,10 +5381,12 @@ dependencies = [
 name = "pallet-quadravote"
 version = "0.1.0"
 dependencies = [
+ "corpus-traits",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "pallet-identity",
+ "pallet-balances",
+ "pallet-votingregistry",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -5671,6 +5677,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-votingregistry"
+version = "0.1.0"
+dependencies = [
+ "corpus-traits",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+]
+
+[[package]]
 name = "pallet-xcm"
 version = "0.9.26"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.26#d8785970175dce344f2a6ad1cd88297529a6dd59"
@@ -5810,13 +5833,13 @@ dependencies = [
  "pallet-authorship",
  "pallet-balances",
  "pallet-collator-selection",
- "pallet-identity",
  "pallet-quadravote",
  "pallet-session",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-transaction-payment-rpc-runtime-api",
+ "pallet-votingregistry",
  "pallet-xcm",
  "parachain-info",
  "parity-scale-codec",
