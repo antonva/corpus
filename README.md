@@ -79,6 +79,10 @@ The quadratic voting system pallet
 
 Extrinsics:
 
-- create_proposal:
-- withdraw_proposal:
-- cast_vote:
+- create_proposal: submits a 32 byte hash representation of a proposal, can only happen in proposal period.
+- withdraw_proposal: withdraws an existing proposal if originally created by the sender. Can only happen in proposal period.
+- cast_vote: Casts votes on proposals via an index. can submit votes_for or votes_against.
+
+Both `create_proposal` and `cast_vote` check for identity via the trait implemented by votingregistry. 
+`withdraw_proposal` does not as an account may have deregistered it's identity but still have funds
+reserved in a proposal.
