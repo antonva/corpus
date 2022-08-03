@@ -459,6 +459,7 @@ parameter_types! {
 	pub const PeriodLength: u32 = 4;
 	pub const MaxProposals: u32 = 1;
 	pub const MaxVotesPerAccount: u32 = 10;
+	pub const MaxVotersPerSession: u32 = 10;
 }
 
 impl pallet_quadravote::Config for Runtime {
@@ -468,6 +469,7 @@ impl pallet_quadravote::Config for Runtime {
 	type PeriodLength = PeriodLength;
 	type MaxProposals = MaxProposals;
 	type MaxVotesPerAccount = MaxVotesPerAccount;
+	type MaxVotersPerSession = MaxVotersPerSession;
 }
 
 parameter_types! {}
@@ -517,7 +519,7 @@ construct_runtime!(
 		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
 
 		// Voting Registry.
-		VotingRegistry: pallet_votingregistry = 50,
+		VotingRegistry: pallet_votingregistry,
 		// Quadratic Voting.
 		Quadravote: pallet_quadravote = 51,
 		// Sudo

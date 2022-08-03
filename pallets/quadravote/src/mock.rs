@@ -69,15 +69,17 @@ parameter_types! {
 	pub const PeriodLength: u32 = 5;
 	pub const MaxProposals: u8 = 10;
 	pub const MaxVotesPerAccount: u32 = 10;
+	pub const MaxVotersPerSession: u32 = 10;
 }
 
 impl pallet_quadravote::Config for Test {
-	type Currency = ();
+	type Currency = Balances;
 	type Event = Event;
 	type IdentityProvider = VotingRegistry;
 	type MaxProposals = MaxProposals;
 	type PeriodLength = PeriodLength;
 	type MaxVotesPerAccount = MaxVotesPerAccount;
+	type MaxVotersPerSession = MaxVotersPerSession;
 }
 
 impl pallet_votingregistry::Config for Test {
