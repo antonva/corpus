@@ -88,3 +88,15 @@ Extrinsics:
 Both `create_proposal` and `cast_vote` check for identity via the trait implemented by votingregistry.
 `withdraw_proposal` does not as an account may have deregistered it's identity but still have funds
 reserved in a proposal.
+
+### One round example
+We assume we start in the proposal period.
+
+1. alice registers to vote by using `votingregistry` extrinsic `register`
+2. alice creates a proposal by using `quadravote` extrinsic `create_proposal`
+3. evelyn registers to vote by using `votingregistry` extrinsic `register`
+4. both wait until voting period starts
+5. alice votes for proposal `0` with all of their votes `10`, reserving 100
+6. evelyn votes against proposal `0` with `5` votes, reserving 25
+7. voting period ends
+8. alice and evelyn are refunded their reserve, proposal `0`'s hash is recorded in enacted proposals
