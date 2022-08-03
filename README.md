@@ -122,3 +122,12 @@ We assume we start in the proposal period.
   located in `./node/service/genesis/` in the corpus repository
 - The parachain should be registered and on cooldown
 - If you haven't already, start the collator via `./scripts/start-collator-node.sh` in the corus repository
+
+## Addendum part two - benchmarking boogaloo
+
+- I would very much like to benchmark the current setup of the voting pallet, knowing full well that the storage layout I went with isn't perfect.
+I feel that the bonuds I introduced to the config would be really helpful when creating said benchmarks.
+
+- The one thing I just realized I forgot to do was to emit all the proposals when the voting round starts and emit the index with the proposal when it is submitted.
+- I would love to find the time to create the christi parachain with the `pallet_towncrier` that would listen to xcmp from corpus and write enacted proposals to storage there, which was the initial idea of this project.
+- I realised that there is no mechanism to revoke an enacted proposal, which would also be something I would like to address later
